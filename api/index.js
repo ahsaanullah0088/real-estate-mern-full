@@ -5,6 +5,8 @@ dotenv.config();
 const app = express();
 const dbURI = process.env.MONGO
 
+import userRouter from './routes/useRoute.js';
+
 mongoose.connect( dbURI).then(()=>{
     console.log('Connected to database');
 }).catch((err)=>{
@@ -17,4 +19,4 @@ app.listen(3000, ()=>{
 })
 
 
-
+app.use('/api/users', userRouter);
