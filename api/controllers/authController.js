@@ -1,8 +1,9 @@
 import User from "../models/user.model.js";
 import bcryptjs from "bcryptjs";
 import { errorHandler } from "../utils/error.js";
+import jwt from "jsonwebtoken";
 
-export const signup = async (req, res , next) => {
+export const signup = async (req, res, next) => {
   try {
     const { email, password, username } = req.body;
 
@@ -28,4 +29,35 @@ export const signup = async (req, res , next) => {
   }
 };
 
+export const signin = async (req, res, next) => {
+  const { email, password } = req.body;
+  try {
+    // Find the user by email
+    const validUser = await User.findOne({ email: email });
+    if (!validUser) return next(errorHandler("User Not Found", 401));
 
+    // Check if the password is valid
+    const validPassword = await bcryptjs.compare(password, validUser.password);
+    if (!validPassword)
+      return next(errorHandler("Invalid email or password", 401));
+
+    // Generate JWT token
+    const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    // Destructure to exclude the password from the response
+    const { password: pass, ...rest } = validUser._doc;
+
+    // Set the token as an HTTP-only cookie and send response
+    res
+      .cookie("access_token", token, {
+        httpOnly: true,
+        expires: new Date(Date.now() + 3600000),
+      })
+      .status(200)
+      .json({ message: "User logged in successfully", user: rest });  // Single json() call
+  } catch (error) {
+    next(error);
+  }
+};
