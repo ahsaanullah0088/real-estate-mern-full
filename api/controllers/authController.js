@@ -33,8 +33,8 @@ export const signin = async (req, res, next) => {
   const { email, password } = req.body;
   try {
     // Find the user by email
-    const validUser = await User.findOne({ email: email });
-    if (!validUser) return next(errorHandler("User Not Found", 401));
+    const validUser = await User.findOne({ email });
+    if (!validUser) return next(errorHandler("User not found", 401));
 
     // Check if the password is valid
     const validPassword = await bcryptjs.compare(password, validUser.password);
@@ -53,10 +53,14 @@ export const signin = async (req, res, next) => {
     res
       .cookie("access_token", token, {
         httpOnly: true,
-        expires: new Date(Date.now() + 3600000),
+        expires: new Date(Date.now() + 3600000), // Expires in 1 hour
       })
       .status(200)
-      .json({ message: "User logged in successfully", user: rest });  // Single json() call
+      .json({
+        success: true,
+        message: "User logged in successfully",
+        user: rest,
+      });
   } catch (error) {
     next(error);
   }
